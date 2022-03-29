@@ -1,17 +1,44 @@
-﻿using System.IO;
+﻿using Microsoft.Office.Interop.Word;
+using System;
+using System.IO;
 
 namespace TemplateDocs.LIB
 {
     public class Document
     {
-        public FileInfo DocumentInfo { get; private set; }
+        private FileInfo _documentInfo;
 
         public Document(string path)
         {
             if (File.Exists(path) == false)
                 throw new FileNotFoundException("Не удалось открыть файл.");
+            if (Path.GetExtension(path) != ".docx")
+                throw new ArgumentException("Файл должен иметь расширение \"docx\".", nameof(path));
 
-            DocumentInfo = new FileInfo(path);
+            _documentInfo = new FileInfo(path);
+        }
+
+        public void ReplaceWords(ReplaceWords words)
+        {
+            var app = new Application();
+            object file = _documentInfo.FullName;
+
+            app.Documents.Open(file);
+
+            foreach (var word in words.Words)
+            {
+                app.Selection.Find.Execute(FindText: word.Key,
+                    MatchCase: false,
+                    MatchWholeWord: false,
+                    MatchWildcards: false,
+                    MatchSoundsLike: Type.Missing,
+                    MatchAllWordForms: false,
+                    Forward: true,
+                    Wrap: WdFindWrap.wdFindContinue,
+                    Format: false,
+                    ReplaceWith: word.Value,
+                    Replace: WdReplace.wdReplaceAll);
+            }
         }
     }
 }
