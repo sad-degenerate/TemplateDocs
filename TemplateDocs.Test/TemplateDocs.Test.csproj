@@ -51,7 +51,7 @@
   <ItemGroup>
     <Compile Include="DocumentTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReplacementInDocTest.cs" />
+    <Compile Include="ReplaceWordsTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

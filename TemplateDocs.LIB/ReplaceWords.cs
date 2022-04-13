@@ -23,7 +23,9 @@ namespace TemplateDocs.LIB
             if (file.Exists == false || Path.GetExtension(file.FullName) != ".txt")
                 throw new ArgumentException("По указанному пути нет подходящего файла.", nameof(file));
 
-            using (StreamReader sr = new StreamReader(file.FullName))
+            Words = new Dictionary<string, string>();
+
+            using (var sr = new StreamReader(file.FullName))
             {
                 string line;
                 while ((line = sr.ReadLine()) != null)
@@ -31,9 +33,9 @@ namespace TemplateDocs.LIB
             }
         }
 
-        private void GetWordsFromLine(string line, string separator = "|")
+        private void GetWordsFromLine(string line, char separator = '|')
         {
-            var words = line.Split('|');
+            var words = line.Split(separator);
 
             if (words.Length == 2)
                 Words.Add(words[0], words[1]);
