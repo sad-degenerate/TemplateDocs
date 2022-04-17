@@ -16,8 +16,10 @@ namespace TemplateDocs.LIB
             Words = words;
         }
 
-        public ReplaceWords(FileInfo file)
+        public ReplaceWords(string path)
         {
+            var file = new FileInfo(path);
+
             if (file == null)
                 throw new ArgumentNullException(nameof(file), "Не передан файл для считывания слов для замены.");
             if (file.Exists == false || Path.GetExtension(file.FullName) != ".txt")
