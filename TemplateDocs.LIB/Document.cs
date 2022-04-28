@@ -10,12 +10,24 @@ namespace TemplateDocs.LIB
 
         public Document(string path)
         {
+            SetActiveDocument(path);
+        }
+
+        private void SetActiveDocument(string path)
+        {
             if (File.Exists(path) == false)
                 throw new FileNotFoundException("Не удалось открыть файл.");
             if (Path.GetExtension(path) != ".docx")
                 throw new ArgumentException("Файл должен иметь расширение \"docx\".", nameof(path));
 
             _documentInfo = new FileInfo(path);
+        }
+
+        public void CopyDocumentAndActivate(string name, string outputPath)
+        {
+            var destFile = outputPath + name;
+            File.Copy(_documentInfo.FullName, destFile);
+            SetActiveDocument(destFile);
         }
 
         public void ReplaceWords(ReplaceWords words)
@@ -39,6 +51,8 @@ namespace TemplateDocs.LIB
                     ReplaceWith: word.Value,
                     Replace: WdReplace.wdReplaceAll);
             }
+
+            app.Documents.Close(file);
         }
     }
 }
