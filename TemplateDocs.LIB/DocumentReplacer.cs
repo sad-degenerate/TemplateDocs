@@ -41,12 +41,12 @@ namespace TemplateDocs.LIB
         /// <param name="replaceWords">Список из слов для замены, в котором 
         /// Key: слово, подлежащее замене, Value: слово, которое встанет на его место.</param>
         /// <param name="documentName">Название нового файла, в котором будет произведена замена.</param>
-        public void Start(Dictionary<string, string> replaceWords, string documentName)
+        public void Replace(Dictionary<string, string> replaceWords, string documentName)
         {
-            if (documentName.Contains(".docx") == false)
+            if (documentName.EndsWith(".docx") == false)
                 documentName += ".docx";
 
-            var destFile = $@"{_outputPath}\{documentName}";
+            var destFile = Path.Combine(_outputPath, documentName);
             File.Copy(_templateDoc.FullName, destFile, true);
 
             ReplaceWords(replaceWords, destFile);
@@ -60,9 +60,8 @@ namespace TemplateDocs.LIB
         private void ReplaceWords(Dictionary<string, string> replaceWords, string filePath)
         {
             var app = new Application();
-            object file = filePath;
 
-            app.Documents.Open(file);
+            app.Documents.Open(filePath);
 
             foreach (var word in replaceWords)
             {
