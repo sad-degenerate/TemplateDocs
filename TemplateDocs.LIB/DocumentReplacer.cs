@@ -24,7 +24,7 @@ namespace TemplateDocs.LIB
         public DocumentReplacer(string path, string outputPath)
         {
             if (Directory.Exists(outputPath) == false)
-                throw new ArgumentException("Введенный вами путь не является директорией.", nameof(_outputPath));
+                Directory.CreateDirectory(outputPath);
             if (File.Exists(path) == false)
                 throw new FileNotFoundException("Не удалось открыть файл.");
             if (Path.GetExtension(path) != ".docx")
