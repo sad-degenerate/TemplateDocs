@@ -81,5 +81,15 @@ namespace TemplateDocs.LIB
             app.Documents.Save();
             app.Quit();
         }
+
+        public void Print(int copies = 1)
+        {
+            var app = new Application();
+            var document = app.Documents.Open(_templateDoc.FullName);
+
+            document.PrintOut(true, false, WdPrintOutRange.wdPrintAllDocument, Item: WdPrintOutItem.wdPrintDocumentContent,
+                                Copies: "1", Pages: "", PageType: WdPrintOutPages.wdPrintAllPages, PrintToFile: false,
+                                Collate: true, ManualDuplexPrint: false);
+        }
     }
 }
