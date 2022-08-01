@@ -1,11 +1,13 @@
 ﻿using Microsoft.Office.Interop.Word;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
 
 namespace TemplateDocs.LIB
 {
-    public class DocumentReplacer
+    public class DocumentManager
     {
         /// <summary>
         /// Путь к шаблону для создания документов.
@@ -15,13 +17,17 @@ namespace TemplateDocs.LIB
         /// Путь к документу, собирающемуся по шаблону.
         /// </summary>
         private string _outputPath;
+        /// <summary>
+        /// Путь к документу, собранному по шаблону.
+        /// </summary>
+        private string _resultFile;
 
         /// <summary>
         /// Создать новый объект класса Document.
         /// </summary>
         /// <param name="path">Путь к документу, в котором находится шаблон.</param>
         /// <param name="outputPath">Путь к папке, в которой будут находиться готовые документы.</param>
-        public DocumentReplacer(string path, string outputPath)
+        public DocumentManager(string path, string outputPath)
         {
             if (Directory.Exists(outputPath) == false)
                 Directory.CreateDirectory(outputPath);
@@ -46,10 +52,10 @@ namespace TemplateDocs.LIB
             if (documentName.EndsWith(".docx") == false)
                 documentName += ".docx";
 
-            var destFile = Path.Combine(_outputPath, documentName);
-            File.Copy(_templateDoc.FullName, destFile, true);
+            _resultFile = Path.Combine(_outputPath, documentName);
+            File.Copy(_templateDoc.FullName, _resultFile, true);
 
-            ReplaceWords(replaceWords, destFile);
+            ReplaceWords(replaceWords, _resultFile);
         }
 
         /// <summary>
@@ -82,14 +88,78 @@ namespace TemplateDocs.LIB
             app.Quit();
         }
 
-        public void Print(int copies = 1)
+        /// <summary>
+        /// Метод, печатающий документ с результатами программы.
+        /// </summary>
+        /// <param name="copies">Количество копий документа.</param>
+        public void Print(int copies)
         {
-            var app = new Application();
-            var document = app.Documents.Open(_templateDoc.FullName);
+            var images = GenerateImages();
 
-            document.PrintOut(true, false, WdPrintOutRange.wdPrintAllDocument, Item: WdPrintOutItem.wdPrintDocumentContent,
-                                Copies: "1", Pages: "", PageType: WdPrintOutPages.wdPrintAllPages, PrintToFile: false,
-                                Collate: true, ManualDuplexPrint: false);
+            var print = new PrintDocument();
+            int currentImage = 0;
+
+            print.PrintPage += (o, e) =>
+            {
+                e.Graphics.DrawImage(images[currentImage], new System.Drawing.Point(0, 0));
+                currentImage++;
+                if (images.Count <= currentImage)
+                {
+                    if (copies > 0)
+                    {
+                        copies--;
+                        currentImage = 0;
+                        e.HasMorePages = true;
+                    }
+                        
+                    e.HasMorePages = false;
+                }
+                else
+                    e.HasMorePages = true;
+            };
+
+            print.PrinterSettings.Duplex = Duplex.Vertical;
+
+            print.Print();
+        }
+
+        /// <summary>
+        /// Метод, который переводит документ Word в серию изображений.
+        /// </summary>
+        /// <returns>Список изображений, полученных из страниц документа.</returns>
+        /// <exception cref="ArgumentException">Ошибка, возникающая, если не удалось преобразовать документ в список изображений.</exception>
+        private List<Image> GenerateImages()
+        {
+            var printList = new List<Image>();
+            var app = new Application();
+            var doc = app.Documents.Open(_resultFile);
+            app.ActiveWindow.ActivePane.View.Type = WdViewType.wdPrintView;
+            app.Visible = false;
+
+            foreach (Window window in doc.Windows)
+            {
+                foreach (Pane pane in window.Panes)
+                {
+                    foreach (Page page in pane.Pages)
+                    {
+                        var bits = page.EnhMetaFileBits;
+
+                        try
+                        {
+                            using (var ms = new MemoryStream((byte[])(bits)))
+                                printList.Add(Image.FromStream(ms));
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new ArgumentException("Не удалось прочитать документ для печати.");
+                        }
+                    }
+                }
+            }
+
+            app.Quit();
+
+            return printList;
         }
     }
 }
