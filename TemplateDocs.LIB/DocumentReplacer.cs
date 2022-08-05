@@ -14,7 +14,7 @@ namespace TemplateDocs.LIB
         /// <summary>
         /// Путь к документу, собирающемуся по шаблону.
         /// </summary>
-        private string _outputPath;
+        public string OutputDocumentPath { get; private set; }
 
         /// <summary>
         /// Создать новый объект класса Document.
@@ -32,7 +32,7 @@ namespace TemplateDocs.LIB
             if (Path.GetExtension(path) != ".docx")
                 throw new ArgumentException("Файл должен иметь расширение \"docx\".", nameof(path));
             
-            _outputPath = outputPath;
+            OutputDocumentPath = outputPath;
             _templateDoc = new FileInfo(path);
         }
 
@@ -49,7 +49,7 @@ namespace TemplateDocs.LIB
             if (Path.GetExtension(documentName) != ".docx")
                 documentName += ".docx";
 
-            var resultFilePath = Path.Combine(_outputPath, documentName);
+            var resultFilePath = Path.Combine(OutputDocumentPath, documentName);
             File.Copy(_templateDoc.FullName, resultFilePath, true);
 
             ReplaceWords(replaceWords, resultFilePath);
