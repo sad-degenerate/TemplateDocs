@@ -29,6 +29,8 @@ namespace TemplateDocs.LIB
                 throw new FileNotFoundException("Указанного вами пути не существует.", nameof(resultFilePath));
             if (Path.GetExtension(resultFilePath) != ".docx")
                 throw new ArgumentException("Файл должен иметь расширение \"docx\".", nameof(resultFilePath));
+
+            _printFilePath = resultFilePath;
         }
 
         /// <summary>
