@@ -1,9 +1,9 @@
-﻿using Microsoft.Office.Interop.Word;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace TemplateDocs.LIB
 {
@@ -34,10 +34,19 @@ namespace TemplateDocs.LIB
         }
 
         /// <summary>
-        /// Метод, печатающий документ с результатами программы.
+        /// Метод, печатающий документ.
         /// </summary>
         /// <param name="copies">Количество копий документа.</param>
-        public void Print(int copies)
+        public async void PrintAsync(int copies)
+        {
+            await Print(copies);
+        }
+
+        /// <summary>
+        /// Метод, печатающий документ.
+        /// </summary>
+        /// <param name="copies">Количество копий документа.</param>
+        public Task Print(int copies)
         {
             var images = GenerateImages();
 
@@ -66,6 +75,8 @@ namespace TemplateDocs.LIB
             print.PrinterSettings.Duplex = Duplex.Vertical;
 
             print.Print();
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -76,16 +87,16 @@ namespace TemplateDocs.LIB
         private List<Image> GenerateImages()
         {
             var printList = new List<Image>();
-            var app = new Application();
+            var app = new Microsoft.Office.Interop.Word.Application();
             var doc = app.Documents.Open(_printFilePath);
-            app.ActiveWindow.ActivePane.View.Type = WdViewType.wdPrintView;
+            app.ActiveWindow.ActivePane.View.Type = Microsoft.Office.Interop.Word.WdViewType.wdPrintView;
             app.Visible = false;
 
-            foreach (Window window in doc.Windows)
+            foreach (Microsoft.Office.Interop.Word.Window window in doc.Windows)
             {
-                foreach (Pane pane in window.Panes)
+                foreach (Microsoft.Office.Interop.Word.Pane pane in window.Panes)
                 {
-                    foreach (Page page in pane.Pages)
+                    foreach (Microsoft.Office.Interop.Word.Page page in pane.Pages)
                     {
                         var bits = page.EnhMetaFileBits;
 

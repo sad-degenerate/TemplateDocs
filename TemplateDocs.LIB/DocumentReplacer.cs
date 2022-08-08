@@ -1,4 +1,4 @@
-﻿using Microsoft.Office.Interop.Word;
+﻿using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -44,7 +44,20 @@ namespace TemplateDocs.LIB
         /// Key: слово, подлежащее замене, Value: слово, которое встанет на его место.</param>
         /// <param name="documentName">Название нового файла, в котором будет произведена замена.</param>
         /// <returns>Путь к файлу, в котором произошла замена.</returns>
-        public string Replace(Dictionary<string, string> replaceWords, string documentName)
+        public async void ReplaceAsync(Dictionary<string, string> replaceWords, string documentName)
+        {
+            await Replace(replaceWords, documentName);
+        }
+
+        /// <summary>
+        /// Точка запуска программы, создает новый файл по указанному пути,
+        /// в котором произведена замена по шаблону.
+        /// </summary>
+        /// <param name="replaceWords">Список из слов для замены, в котором 
+        /// Key: слово, подлежащее замене, Value: слово, которое встанет на его место.</param>
+        /// <param name="documentName">Название нового файла, в котором будет произведена замена.</param>
+        /// <returns>Путь к файлу, в котором произошла замена.</returns>
+        public Task Replace(Dictionary<string, string> replaceWords, string documentName)
         {
             if (Path.GetExtension(documentName) != ".docx")
                 documentName += ".docx";
@@ -53,7 +66,8 @@ namespace TemplateDocs.LIB
             File.Copy(_templateDoc.FullName, resultFilePath, true);
 
             ReplaceWords(replaceWords, resultFilePath);
-            return resultFilePath;
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -63,7 +77,7 @@ namespace TemplateDocs.LIB
         /// <param name="filePath">Путь к файлу, в которому нужно заменить слова.</param>
         private void ReplaceWords(Dictionary<string, string> replaceWords, string filePath)
         {
-            var app = new Application();
+            var app = new Microsoft.Office.Interop.Word.Application();
 
             app.Documents.Open(filePath);
 
@@ -76,10 +90,10 @@ namespace TemplateDocs.LIB
                     MatchSoundsLike: Type.Missing,
                     MatchAllWordForms: false,
                     Forward: true,
-                    Wrap: WdFindWrap.wdFindContinue,
+                    Wrap: Microsoft.Office.Interop.Word.WdFindWrap.wdFindContinue,
                     Format: false,
                     ReplaceWith: word.Value,
-                    Replace: WdReplace.wdReplaceAll);
+                    Replace: Microsoft.Office.Interop.Word.WdReplace.wdReplaceAll);
             }
 
             app.Documents.Save();
