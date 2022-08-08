@@ -37,16 +37,16 @@ namespace TemplateDocs.LIB
         /// Метод, печатающий документ.
         /// </summary>
         /// <param name="copies">Количество копий документа.</param>
-        public async void PrintAsync(int copies)
+        public async Task PrintAsync(int copies)
         {
-            await Print(copies);
+            await Task.Run(() => Print(copies));
         }
 
         /// <summary>
         /// Метод, печатающий документ.
         /// </summary>
         /// <param name="copies">Количество копий документа.</param>
-        public Task Print(int copies)
+        public void Print(int copies)
         {
             var images = GenerateImages();
 
@@ -75,8 +75,6 @@ namespace TemplateDocs.LIB
             print.PrinterSettings.Duplex = Duplex.Vertical;
 
             print.Print();
-
-            return Task.CompletedTask;
         }
 
         /// <summary>

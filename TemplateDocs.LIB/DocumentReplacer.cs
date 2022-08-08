@@ -46,7 +46,7 @@ namespace TemplateDocs.LIB
         /// <returns>Путь к файлу, в котором произошла замена.</returns>
         public async void ReplaceAsync(Dictionary<string, string> replaceWords, string documentName)
         {
-            await Replace(replaceWords, documentName);
+            await Task.Run(() => Replace(replaceWords, documentName));
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace TemplateDocs.LIB
         /// Key: слово, подлежащее замене, Value: слово, которое встанет на его место.</param>
         /// <param name="documentName">Название нового файла, в котором будет произведена замена.</param>
         /// <returns>Путь к файлу, в котором произошла замена.</returns>
-        public Task Replace(Dictionary<string, string> replaceWords, string documentName)
+        public void Replace(Dictionary<string, string> replaceWords, string documentName)
         {
             if (Path.GetExtension(documentName) != ".docx")
                 documentName += ".docx";
@@ -66,8 +66,6 @@ namespace TemplateDocs.LIB
             File.Copy(_templateDoc.FullName, resultFilePath, true);
 
             ReplaceWords(replaceWords, resultFilePath);
-
-            return Task.CompletedTask;
         }
 
         /// <summary>
