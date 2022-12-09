@@ -76,6 +76,7 @@ namespace TemplateDocs.LIB
         private void ReplaceWords(Dictionary<string, string> replaceWords, string filePath)
         {
             var app = new Microsoft.Office.Interop.Word.Application();
+            app.Visible = false;
 
             app.Documents.Open(filePath);
 

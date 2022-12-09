@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
-using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.Office.Interop.Word;
+using Point = System.Drawing.Point;
+using Task = System.Threading.Tasks.Task;
 
 namespace TemplateDocs.LIB
 {
@@ -12,7 +15,7 @@ namespace TemplateDocs.LIB
         /// <summary>
         /// Путь к файлу для печати.
         /// </summary>
-        private string _printFilePath;
+        private readonly string _printFilePath;
 
         /// <summary>
         /// Создать новый экземпляр класса DocumentPrinter.
@@ -23,7 +26,7 @@ namespace TemplateDocs.LIB
         /// <exception cref="ArgumentException">Если файл имеет недопустимое расширение (допустимое - только ".docx").</exception>
         public DocumentPrinter(string resultFilePath)
         {
-            if (string.IsNullOrWhiteSpace(resultFilePath) == true)
+            if (string.IsNullOrWhiteSpace(resultFilePath))
                 throw new ArgumentNullException(nameof(resultFilePath), "Путь к файлу для печати пуст.");
             if (File.Exists(resultFilePath) == false)
                 throw new FileNotFoundException("Указанного вами пути не существует.", nameof(resultFilePath));
@@ -37,25 +40,27 @@ namespace TemplateDocs.LIB
         /// Метод, печатающий документ.
         /// </summary>
         /// <param name="copies">Количество копий документа.</param>
-        public async Task PrintAsync(int copies)
+        /// <param name="isDuplex">Использовать ли двухстороннюю печать.</param>
+        public async Task PrintAsync(int copies, bool isDuplex)
         {
-            await Task.Run(() => Print(copies));
+            await Task.Run(() => Print(copies, isDuplex));
         }
 
         /// <summary>
         /// Метод, печатающий документ.
         /// </summary>
         /// <param name="copies">Количество копий документа.</param>
-        public void Print(int copies)
+        /// <param name="isDuplex">Использовать ли двухстороннюю печать.</param>
+        public void Print(int copies, bool isDuplex)
         {
             var images = GenerateImages();
 
             var print = new PrintDocument();
-            int currentImage = 0;
+            var currentImage = 0;
 
             print.PrintPage += (o, e) =>
             {
-                e.Graphics.DrawImage(images[currentImage], new System.Drawing.Point(0, 0));
+                e.Graphics.DrawImage(images[currentImage], new Point(0, 0));
                 currentImage++;
                 if (images.Count <= currentImage)
                 {
@@ -72,7 +77,7 @@ namespace TemplateDocs.LIB
                     e.HasMorePages = true;
             };
 
-            print.PrinterSettings.Duplex = Duplex.Vertical;
+            print.PrinterSettings.Duplex = isDuplex ? Duplex.Vertical : Duplex.Simplex;
 
             print.Print();
         }
@@ -85,29 +90,25 @@ namespace TemplateDocs.LIB
         private List<Image> GenerateImages()
         {
             var printList = new List<Image>();
-            var app = new Microsoft.Office.Interop.Word.Application();
+            var app = new Application();
             var doc = app.Documents.Open(_printFilePath);
-            app.ActiveWindow.ActivePane.View.Type = Microsoft.Office.Interop.Word.WdViewType.wdPrintView;
+            app.ActiveWindow.ActivePane.View.Type = WdViewType.wdPrintView;
             app.Visible = false;
 
-            foreach (Microsoft.Office.Interop.Word.Window window in doc.Windows)
+            foreach (var bits in from Window window in doc.Windows 
+                     from Pane pane in window.Panes 
+                     from Page page in pane.Pages select page.EnhMetaFileBits)
             {
-                foreach (Microsoft.Office.Interop.Word.Pane pane in window.Panes)
+                try
                 {
-                    foreach (Microsoft.Office.Interop.Word.Page page in pane.Pages)
+                    using (var ms = new MemoryStream((byte[])(bits)))
                     {
-                        var bits = page.EnhMetaFileBits;
-
-                        try
-                        {
-                            using (var ms = new MemoryStream((byte[])(bits)))
-                                printList.Add(Image.FromStream(ms));
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new ArgumentException("Не удалось прочитать документ для печати.");
-                        }
+                        printList.Add(Image.FromStream(ms));
                     }
+                }
+                catch (Exception ex)
+                {
+                    throw new ArgumentException("Не удалось прочитать документ для печати.");
                 }
             }
 
